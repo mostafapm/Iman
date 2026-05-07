@@ -1,9 +1,8 @@
 // MasterHttpRelay exit node for Deno Deploy.
-// Deploy as HTTP endpoint and set PSK via Environment Variables.
+// Deploy as HTTP endpoint and set PSK to a strong secret.
 
 declare const Deno: any;
 
-// خواندن مقدار از متغیرهای محیطی سیستم
 const PSK = Deno.env.get("PSK");
 
 const STRIP_HEADERS = new Set([
@@ -52,14 +51,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return Response.json({ e: "method_not_allowed" }, { status: 405 });
     }
 
-    if (!PSK) {
-      console.error("Environment variable 'PSK' is not set!");
-      return Response.json({ e: "server_configuration_error" }, { status: 500 });
-    }
-
     const body = await req.json();
     if (!body || typeof body !== "object") {
       return Response.json({ e: "bad_json" }, { status: 400 });
+    }
+
+    if (!PSK) {
+      return Response.json({ e: "server_psk_missing" }, { status: 500 });
     }
 
     const k = String((body as any).k ?? "");
